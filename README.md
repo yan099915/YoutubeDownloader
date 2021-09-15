@@ -15,7 +15,7 @@ npm install
 ```javascript
 node index.js
 
-# input youtube channel videos link simply change the channel link at app.js
+# input youtube channel videos link
 https://www.youtube.com/c/example_channel/videos
 
 # debugging
