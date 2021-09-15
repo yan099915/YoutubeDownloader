@@ -8,7 +8,7 @@ module.exports = {
   main: async (req, res) => {
     const { id, url } = req.body;
 
-    const browser = await puppeteer.launch({ headless: false });
+    const browser = await puppeteer.launch({ headless: true });
     const page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 800 });
     await page.goto(url);
