@@ -19,7 +19,7 @@ module.exports = {
     let listdata = [];
     let downloaded = 0;
     let videos = await page.$$("#items #dismissible");
-    const location = `./downloaded/${id}/list.json`;
+    const location = `./data/${id}/list.json`;
 
     // find and check list.json
     try {

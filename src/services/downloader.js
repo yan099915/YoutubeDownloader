@@ -14,9 +14,9 @@ module.exports = {
       const videoname = filename[0]
         .replace(/[&\/\\#,+()$~%.'":*?<>{}]/, "")
         .trim();
-      const folder = "./downloaded/" + id + "/";
-      const json = `./downloaded/${id}/${videoname}.json`;
-      const m4a = `./downloaded/${id}/${videoname}.m4a`;
+      const folder = "./data/" + id + "/";
+      const json = `./data/${id}/${videoname}.json`;
+      const m4a = `./data/${id}/${videoname}.m4a`;
 
       // make directory for downloaded assets
       const directory = await fs.mkdir(
