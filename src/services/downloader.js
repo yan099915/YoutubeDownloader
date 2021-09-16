@@ -2,6 +2,7 @@ const ytdl = require("ytdl-core");
 const fs = require("fs");
 const path = require("path");
 const puppeteer = require("puppeteer");
+require("dotenv").config();
 
 module.exports = {
   download: async (url, id) => {
@@ -41,6 +42,7 @@ module.exports = {
 
       // save m4a file to folder
       const download = await ytdl(url).pipe(fs.createWriteStream(m4a));
+      const DOMAIN = process.env.domain;
       const data = { url: url, m4a: m4a, json: json };
       return data;
     } catch (error) {
