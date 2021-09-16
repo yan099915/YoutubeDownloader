@@ -1,4 +1,5 @@
 require("dotenv").config();
+const fs = require("fs");
 const server = require("./src/server");
 
 const { PORT, NODE_ENV } = process.env;

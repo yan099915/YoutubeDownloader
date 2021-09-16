@@ -2,7 +2,6 @@ const ytdl = require("ytdl-core");
 const fs = require("fs");
 const path = require("path");
 const puppeteer = require("puppeteer");
-require("dotenv").config();
 
 module.exports = {
   download: async (url, id) => {
@@ -10,13 +9,13 @@ module.exports = {
       const videoID = url.toString().split("=");
       let info = await ytdl.getInfo(videoID[1]);
       let audioFormats = ytdl.filterFormats(info.formats, "audioonly");
-      const filename = info.videoDetails.title.toString().split("|");
-      const videoname = filename[0]
-        .replace(/[&\/\\#,+()$~%.'":*?<>{}]/, "")
-        .trim();
-      const folder = "./data/" + id + "/";
+
+      const videoname = videoID[1].trim();
+      const folder = "./data/" + id;
       const json = `./data/${id}/${videoname}.json`;
       const m4a = `./data/${id}/${videoname}.m4a`;
+      const url1 = `http://yt-downloader.deploy.cbs.co.id/${id}/${videoname}.m4a`;
+      const url2 = `http://yt-downloader.deploy.cbs.co.id/${id}/${videoname}.json`;
 
       // make directory for downloaded assets
       const directory = await fs.mkdir(
@@ -43,10 +42,10 @@ module.exports = {
       // save m4a file to folder
       const download = await ytdl(url).pipe(fs.createWriteStream(m4a));
       const DOMAIN = process.env.domain;
-      const data = { url: url, m4a: m4a, json: json };
+      const data = { url: url, m4a: url1, json: url2 };
       return data;
     } catch (error) {
-      return error;
+      console.log(error);
     }
   },
 

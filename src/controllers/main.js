@@ -6,9 +6,16 @@ const application = require("../services/downloader");
 module.exports = {
   // USER LOGIN
   main: async (req, res) => {
-    const { id, url } = req.body;
-
-    const browser = await puppeteer.launch({ headless: true });
+    const { id, url, limit } = req.query;
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      executablePath:
+        "/usr/src/app/node_modules/puppeteer/.local-chromium/linux-901912/chrome-linux/chrome",
+    });
+    // const browser = await puppeteer.launch({
+    //   headless: true,
+    // });
     const page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 800 });
     await page.goto(url);
@@ -17,6 +24,7 @@ module.exports = {
     });
 
     let listdata = [];
+
     let downloaded = 0;
     let videos = await page.$$("#items #dismissible");
     const location = `./data/${id}/list.json`;
@@ -29,9 +37,7 @@ module.exports = {
         console.log(listdata);
       }
     } catch (error) {
-      res.status(501).json({
-        error: error,
-      });
+      console.log(error);
     }
 
     try {
@@ -42,14 +48,26 @@ module.exports = {
           (nodes) => nodes.map((n) => n.href)
         );
 
-        const checking = await listdata.find(function (listdata, index) {
-          if (listdata.url == videoUrl) {
-            boolean = true;
-          }
-        });
+        // if (listdata.length > 0) {
+        //   console.log("checking");
+        //   const checking = await listdata.find(function (listdata, index) {
+        //     if (listdata.url == videoUrl) {
+        //       boolean = true;
+        //     }
+        //   });
+        // }
 
+        if (listdata.length > 10) {
+          console.log("checking");
+          for (j = 0; j < listdata.length; j++) {
+            if (listdata[j].url == videoUrl) {
+              console.log(j, listdata[j].url);
+              boolean = true;
+            }
+          }
+        }
         // console.log(videoUrl.toString());
-        // console.log(i);
+        console.log(i);
 
         if (boolean == false) {
           const downloadFile = await application.download(
@@ -57,7 +75,9 @@ module.exports = {
             id
           );
           downloaded += 1;
-          listdata.push(downloadFile);
+          await listdata.push(downloadFile);
+          console.log("Downloaded files from : " + videoUrl.toString());
+          console.log("files downloaded " + downloaded);
         }
 
         // auto save downloaded file list every 10 videos
@@ -77,19 +97,22 @@ module.exports = {
             videos = await page.$$("#items #dismissible");
           }
         }
+        // Boolean(download == limit);
+        if (downloaded >= limit) {
+          const savelist = await application.list(location, listdata);
+          break;
+        }
       }
     } catch (error) {
-      res.status(501).json({
-        error: error,
-      });
+      console.log(error);
     }
     // console.log(listdata);
     res.status(201).send({ message: `Downloaded files: ${downloaded}` });
   },
 
   data: async (req, res) => {
-    const id = req.body.id;
-    const location = `./downloaded/${id}/list.json`;
+    const id = req.query.id;
+    const location = `./data/${id}/list.json`;
     try {
       if (fs.existsSync(location)) {
         //file exists
@@ -98,9 +121,7 @@ module.exports = {
         res.status(400).send({ message: "File with that id is not exist" });
       }
     } catch (error) {
-      res.status(501).json({
-        error: error,
-      });
+      console.log(error);
     }
   },
 };
