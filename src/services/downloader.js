@@ -30,6 +30,12 @@ module.exports = {
           }
         }
       );
+      let vdetails = info.player_response.videoDetails;
+      const metadata = {
+        title: vdetails.title,
+        keywords: vdetails.keywords,
+        shortDescription: vdetails.shortDescription,
+      };
 
       // save m4a file to folder
       const download = await ytdl(url).pipe(fs.createWriteStream(m4a));
@@ -39,7 +45,7 @@ module.exports = {
         userid: id,
         url: url,
         m4a: url1,
-        metadata: info,
+        metadata: metadata,
       };
       // console.log(info.videoDetails);
       return data;
