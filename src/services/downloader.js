@@ -2,6 +2,11 @@ const ytdl = require("ytdl-core");
 const fs = require("fs");
 const path = require("path");
 const puppeteer = require("puppeteer");
+const { flatten } = require("safe-flat");
+const PouchDB = require("pouchdb");
+PouchDB.plugin(require("pouchdb-quick-search"));
+PouchDB.plugin(require("pouchdb-find"));
+const db = new PouchDB("filesdata");
 
 module.exports = {
   download: async (url, id) => {
@@ -12,10 +17,8 @@ module.exports = {
 
       const videoname = videoID[1].trim();
       const folder = "./data/" + id;
-      const json = `./data/${id}/${videoname}.json`;
       const m4a = `./data/${id}/${videoname}.m4a`;
       const url1 = `http://yt-downloader.deploy.cbs.co.id/${id}/${videoname}.m4a`;
-      const url2 = `http://yt-downloader.deploy.cbs.co.id/${id}/${videoname}.json`;
 
       // make directory for downloaded assets
       const directory = await fs.mkdir(
@@ -28,46 +31,88 @@ module.exports = {
         }
       );
 
-      // save downloaded file information to json file
-      const jsonfile = await fs.writeFile(
-        path.resolve(json),
-        JSON.stringify(info.videoDetails),
-        function (err) {
-          if (err) {
-            console.log(err);
-          }
-        }
-      );
-
       // save m4a file to folder
       const download = await ytdl(url).pipe(fs.createWriteStream(m4a));
       const DOMAIN = process.env.domain;
-      const data = { url: url, m4a: url1, json: url2 };
+      const data = {
+        videoId: videoID[1],
+        userid: id,
+        url: url,
+        m4a: url1,
+        metadata: info,
+      };
+      // console.log(info.videoDetails);
       return data;
     } catch (error) {
       console.log(error);
     }
   },
 
-  list: async (location, json) => {
-    const jsonfile = await fs.writeFile(
-      path.resolve(location),
-      JSON.stringify(json),
-      function (err) {
-        if (err) {
-          console.log(err);
-        }
-      }
-    );
+  dbdata: async (id) => {
+    return db.search({
+      query: id,
+      fields: ["userid"],
+      include_docs: true,
+    });
   },
 
-  getdata: async (id) => {
-    console.log(listdata, videoUrl);
+  savedata: async (data) => {
+    // console.log(data);
+    let response;
 
-    const check = await listdata.find(function (listdata, index) {
-      if (listdata.url == videoUrl) {
-        return true;
+    const doc = await db
+      .bulkDocs(data)
+      .then(function (result) {
+        // handle result
+        response = result;
+      })
+      .catch(function (err) {
+        console.log(err);
+      });
+
+    const clean = await db
+      .viewCleanup()
+      .then(function (result) {
+        // handle result
+      })
+      .catch(function (err) {
+        console.log(err);
+      });
+    return response;
+  },
+
+  getall: async (id, data) => {
+    return await db.allDocs(function (err, doc) {
+      if (err) {
+        console.log(err);
       }
     });
+  },
+
+  search: async (keyword, limit, skip) => {
+    // console.log(id);
+    // console.log(keyword);
+
+    return db.search({
+      query: keyword,
+      fields: [
+        "_id",
+        "userid",
+        "metadata.player_response.videoDetails.title",
+        "metadata.player_response.videoDetails.keywords",
+        "metadata.player_response.videoDetails.shortsDescription",
+      ],
+      include_docs: true,
+      limit: limit,
+      skip: skip,
+    });
+  },
+
+  flatten: async (data) => {
+    try {
+      return await flatten(data, "_");
+    } catch (err) {
+      console.log(err);
+    }
   },
 };
